@@ -5,6 +5,13 @@ All notable Cinderhell changes are recorded here. The project uses
 
 ## [Unreleased]
 
+### Planned
+
+- Bluetooth gamepad compatibility, rumble, and reconnect validation.
+- Explicit user-controlled backup/export and restore.
+
+## [0.1.0-preview.2] - Unpublished
+
 ### Changed
 
 - Reworked the launcher around a selected-profile Play hero, responsive
@@ -14,11 +21,6 @@ All notable Cinderhell changes are recorded here. The project uses
   handheld is unavailable.
 - Aligned Compose compile and runtime libraries and hardened physical
   instrumentation against a sleeping target device.
-
-### Planned
-
-- Bluetooth gamepad compatibility, rumble, and reconnect validation.
-- Explicit user-controlled backup/export and restore.
 
 ## [0.1.0-preview.1] - Unpublished
 
@@ -32,5 +34,6 @@ All notable Cinderhell changes are recorded here. The project uses
 - Reproducible, signed GitHub draft-prerelease pipeline with corresponding
   source and checksums.
 
-[Unreleased]: https://github.com/AnthonyStainer/cinderhell/compare/v0.1.0-preview.1...HEAD
+[Unreleased]: https://github.com/AnthonyStainer/cinderhell/compare/v0.1.0-preview.2...HEAD
+[0.1.0-preview.2]: https://github.com/AnthonyStainer/cinderhell/compare/v0.1.0-preview.1...v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/AnthonyStainer/cinderhell/releases/tag/v0.1.0-preview.1
