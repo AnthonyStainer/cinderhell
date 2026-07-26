@@ -10,7 +10,7 @@ All notable Cinderhell changes are recorded here. The project uses
 - Bluetooth gamepad compatibility, rumble, and reconnect validation.
 - Explicit user-controlled backup/export and restore.
 
-## [0.1.0-preview.2] - Unpublished
+## [0.1.0-preview.2] - 2026-07-26
 
 ### Changed
 
@@ -36,4 +36,4 @@ All notable Cinderhell changes are recorded here. The project uses
 
 [Unreleased]: https://github.com/AnthonyStainer/cinderhell/compare/v0.1.0-preview.2...HEAD
 [0.1.0-preview.2]: https://github.com/AnthonyStainer/cinderhell/compare/v0.1.0-preview.1...v0.1.0-preview.2
-[0.1.0-preview.1]: https://github.com/AnthonyStainer/cinderhell/releases/tag/v0.1.0-preview.1
+[0.1.0-preview.1]: https://github.com/AnthonyStainer/cinderhell/tree/v0.1.0-preview.1

@@ -59,15 +59,20 @@ run, and restores the previous stay-awake setting on exit.
 
 ## Release screenshots
 
-Before publishing the next preview, capture the exact signed build after the
-physical gate resumes:
+The exact signed `v0.1.0-preview.2` build was captured on the AYN Thor during
+its physical publication gate:
 
-- Home with the selected Freedoom profile and Play hero.
-- Home with a real Continue card.
-- Game/profile selection with controller focus visible on an unselected card.
-- Profile editor showing a deterministic load order.
-- Library showing included and imported content without exposing private paths.
+- `preview2-home.png` shows the selected Freedoom profile and Play hero.
+- `preview2-continue-focused.png` shows a real MAP01 Continue card.
+- `preview2-unselected-profile-action-focused.png` shows controller focus on
+  the unselected Add mod set action.
+- `preview2-profile-editor.png` shows the deterministic base-game-only load
+  order.
+- `preview2-library.png` shows included content without exposing private
+  filesystem paths.
 
-Do not fabricate controller support evidence from an emulator screenshot.
-Bluetooth remains explicitly unvalidated, and the unpublished release must
-remain behind the physical signed-APK smoke gate.
+The captures and gate logs are retained locally under
+`build/release-device-gate/`. Controller evidence must come from physical
+hardware, not an emulator screenshot. Bluetooth remains explicitly
+unvalidated and the published prerelease does not claim compatible mappings,
+rumble, or reconnect behavior.
