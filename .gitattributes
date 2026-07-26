@@ -1,0 +1,13 @@
+* text=auto
+
+*.bat text eol=crlf
+*.sh text eol=lf
+gradlew text eol=lf
+
+*.jar binary
+*.pk3 binary
+*.wad binary
+*.zip binary
+
+# Unified diffs necessarily encode blank context lines with a leading space.
+native/patches/*.patch -whitespace

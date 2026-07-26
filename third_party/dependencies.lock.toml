@@ -1,0 +1,41 @@
+format = 1
+strategy = "Pinned Git submodules for source; checksummed official release archives for packaged SDL3 and Freedoom artifacts."
+
+[woof]
+version = "15.2.0-dev-sdl3"
+repository = "https://github.com/fabiangreffrath/woof.git"
+revision = "5f7a0def133056cb527312f2376b3088adb863fc"
+upstream_ref = "master"
+pin_reason = "First unreleased upstream line using SDL3 >= 3.4; exact commit required until the SDL3 port receives a release tag."
+license = "GPL-2.0-or-later with per-file exceptions documented upstream"
+woof_pk3_sha256 = "ebd6dac1b3761b468d7d2982e9b641e98975c4f3e05e06f0f9767d9967ba6a31"
+path = "third_party/woof"
+
+[sdl3]
+version = "3.4.10"
+repository = "https://github.com/libsdl-org/SDL.git"
+revision = "8e37db5e797b6167f3a00d697d816a684bd259c7"
+license = "Zlib"
+android_archive_url = "https://github.com/libsdl-org/SDL/releases/download/release-3.4.10/SDL3-devel-3.4.10-android.zip"
+android_archive_sha256 = "f676e29b1b4eb990e24862b6af5f327379dc496c9f5f3e3f48ab75837f95844e"
+aar_sha256 = "e80e8ab1bc969bed28192d34c2029f223ce06cf106aa3d1167220334b581ddb0"
+source_archive_url = "https://github.com/libsdl-org/SDL/archive/8e37db5e797b6167f3a00d697d816a684bd259c7.tar.gz"
+source_archive_sha256 = "85aa3f7b01e91d9a0b2e8079b065c594e579c43d53d5671c8f68b20074cc896e"
+
+[openal_soft]
+version = "1.24.3"
+repository = "https://github.com/kcat/openal-soft.git"
+revision = "dc7d7054a5b4f3bec1dc23a42fd616a0847af948"
+license = "LGPL-2.0-or-later"
+path = "third_party/openal-soft"
+
+[freedoom]
+version = "0.13.0"
+repository = "https://github.com/freedoom/freedoom.git"
+revision = "cfb8644b1a8dc7d7d2177e6a892ccaa2922bdaae"
+annotated_tag_object = "8cecc3642861dfb71839984c886d5576fa120d49"
+license = "BSD-3-Clause"
+release_url = "https://github.com/freedoom/freedoom/releases/download/v0.13.0/freedoom-0.13.0.zip"
+release_sha256 = "3f9b264f3e3ce503b4fb7f6bdcb1f419d93c7b546f4df3e874dd878db9688f59"
+freedoom2_wad_sha256 = "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+path = "third_party/freedoom"

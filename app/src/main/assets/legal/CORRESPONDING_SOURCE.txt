@@ -1,0 +1,20 @@
+Cinderhell corresponding source
+================================
+
+The complete, machine-readable source for this exact application build,
+including Cinderhell, the Woof Android patch, Woof, OpenAL Soft, SDL 3, and
+the Freedoom data source, is supplied in the release artifact named:
+
+    cinderhell-<version>-corresponding-source.tar.gz
+
+Build it from an initialized checkout with:
+
+    ./scripts/package-corresponding-source.sh
+
+Pinned revisions, checksums, source URLs, and license identifiers are in:
+
+    third_party/dependencies.lock.toml
+
+Build instructions are in docs/toolchain.md, docs/native-port.md, and
+docs/release.md. The archive includes all build scripts needed to regenerate
+the APK from source. No proprietary engine or game data is required.

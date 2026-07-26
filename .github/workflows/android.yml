@@ -1,0 +1,106 @@
+name: Android
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_device_tests:
+        description: Run instrumentation on an attached arm64 device runner
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android toolchain
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973" "cmake;3.31.6"
+
+      - name: Fetch pinned runtime artifacts
+        run: ./scripts/fetch-native-dependencies.sh
+
+      - name: Verify bootstrap invariants
+        run: |
+          ./scripts/verify-bootstrap.sh
+          ./scripts/build-test-corpus.py
+          (cd test-corpus/generated && sha256sum --check SHA256SUMS)
+
+      - name: JVM tests and native Android builds
+        run: ./gradlew testDebugUnitTest assembleDebug assembleRelease assemblePreview --stacktrace
+
+      - name: Inspect APK contents
+        run: |
+          ./scripts/inspect-apk.sh app/build/outputs/apk/debug/app-debug.apk
+          ./scripts/inspect-apk.sh app/build/outputs/apk/release/app-release-unsigned.apk
+          ./scripts/inspect-apk.sh app/build/outputs/apk/preview/app-preview.apk
+
+      - name: Verify preview signature
+        run: apksigner verify --verbose app/build/outputs/apk/preview/app-preview.apk
+
+      - name: Build corresponding-source archive
+        run: ./scripts/package-corresponding-source.sh
+
+      - name: Retain APKs, source, and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinderhell-android
+          path: |
+            app/build/outputs/apk/**/*.apk
+            app/build/reports/**
+            app/build/test-results/**
+            build/release/**
+
+  device-tests:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_device_tests
+    runs-on: [self-hosted, linux, android-arm64]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Fetch and verify dependencies
+        run: |
+          ./scripts/fetch-native-dependencies.sh
+          ./scripts/verify-bootstrap.sh
+
+      - name: Physical arm64 instrumentation
+        run: ./gradlew connectedDebugAndroidTest --stacktrace
+
+      - name: Capture device matrix evidence
+        if: always()
+        run: |
+          adb shell getprop > app/build/device-properties.txt
+          adb shell dumpsys input > app/build/device-input.txt
+          adb shell dumpsys display > app/build/device-display.txt
+          adb logcat -d > app/build/device-logcat.txt
+
+      - name: Retain instrumentation and device diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinderhell-device-tests
+          path: |
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
+            app/build/device-*.txt

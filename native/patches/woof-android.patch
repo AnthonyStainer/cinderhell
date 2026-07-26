@@ -1,0 +1,197 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4e85acd..99a8934 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -116,9 +116,14 @@ check_c_source_compiles(
+ 
+ set(CMAKE_FIND_FRAMEWORK NEVER)
+ 
+-# Library requirements.
+-find_package(SDL3 3.4.0 REQUIRED)
+-find_package(OpenAL REQUIRED)
++# Library requirements. Android supplies these targets from the Cinderhell
++# wrapper: SDL3 through the official Prefab AAR and OpenAL Soft from source.
++if(NOT TARGET SDL3::SDL3)
++    find_package(SDL3 3.4.0 REQUIRED)
++endif()
++if(NOT TARGET OpenAL::OpenAL)
++    find_package(OpenAL REQUIRED)
++endif()
+ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+     find_package(ALSA REQUIRED)
+ endif()
+diff --git a/src/i_exit.c b/src/i_exit.c
+index 3283091..917add6 100644
+--- a/src/i_exit.c
++++ b/src/i_exit.c
+@@ -21,6 +21,11 @@
+ #include "i_exit.h"
+ #include "i_printf.h"
+ 
++#ifdef __ANDROID__
++jmp_buf i_android_exit_environment;
++int i_android_exit_code;
++#endif
++
+ typedef struct atexit_listentry_s
+ {
+     atexit_func_t func;
+@@ -72,7 +77,15 @@ void I_SafeExit(int rc)
+         }
+     }
+ 
++#ifdef __ANDROID__
++    // Android packages Woof as SDLActivity's libmain.so. Return through
++    // SDL_main so the Java session boundary can atomically record the result
++    // before the dedicated game process is terminated.
++    i_android_exit_code = rc;
++    longjmp(i_android_exit_environment, 1);
++#else
+     exit(rc);
++#endif
+ }
+ 
+ // Schedule a function to be called when the program receives a signal.
+diff --git a/src/d_iwad.c b/src/d_iwad.c
+index 55a314f..5415441 100644
+--- a/src/d_iwad.c
++++ b/src/d_iwad.c
+@@ -762,13 +762,20 @@ char *D_FindIWADFile(void)
+ 
+         char *iwadfile = myargv[iwadparm + 1];
+ 
+-        char *file = AddDefaultExtension(iwadfile, ".wad");
++        char *file = NULL;
+ 
+-        result = D_FindWADByName(file);
++        // Prefer an exact existing path. Cinderhell's immutable content store
++        // names blobs by digest, so a valid IWAD intentionally has no suffix.
++        result = D_FindWADByName(iwadfile);
++        if (result == NULL)
++        {
++            file = AddDefaultExtension(iwadfile, ".wad");
++            result = D_FindWADByName(file);
++        }
+ 
+         if (result == NULL)
+         {
+-            I_Error("IWAD file '%s' not found!", file);
++            I_Error("IWAD file '%s' not found!", file ? file : iwadfile);
+         }
+         else
+         {
+diff --git a/src/i_exit.h b/src/i_exit.h
+index c818893..ee14f47 100644
+--- a/src/i_exit.h
++++ b/src/i_exit.h
+@@ -20,6 +20,13 @@
+ 
+ #include "doomtype.h"
+ 
++#ifdef __ANDROID__
++#include <setjmp.h>
++
++extern jmp_buf i_android_exit_environment;
++extern int i_android_exit_code;
++#endif
++
+ typedef enum
+ {
+     exit_priority_first,
+diff --git a/src/w_file.c b/src/w_file.c
+index 976dc99..efaf2d8 100644
+--- a/src/w_file.c
++++ b/src/w_file.c
+@@ -119,9 +119,21 @@ static w_type_t W_FILE_Open(const char *path, w_handle_t *handle)
+     w_handle_t local_handle = {.p1.descriptor = descriptor,
+                                .priority = handle->priority};
+ 
++    // Open suffixless content-addressed WADs by signature. The immutable
++    // Cinderhell store deliberately does not derive filenames from user input.
++    boolean is_wad = M_StringCaseEndsWith(path, ".wad");
++    if (!is_wad)
++    {
++        char signature[4];
++        is_wad = fread(signature, 1, sizeof(signature), descriptor) == sizeof(signature)
++                 && (!strncmp(signature, "IWAD", 4)
++                     || !strncmp(signature, "PWAD", 4));
++        rewind(descriptor);
++    }
++
+     // open the file and add to directory
+ 
+-    if (!M_StringCaseEndsWith(path, ".wad"))
++    if (!is_wad)
+     {
+         array_push(descriptors, descriptor);
+ 
+diff --git a/src/i_main.c b/src/i_main.c
+index 6c6b763..b4a0883 100644
+--- a/src/i_main.c
++++ b/src/i_main.c
+@@ -40,6 +40,13 @@ int main(int argc, char **argv)
+    myargc = argc;
+    myargv = argv;
+ 
++#ifdef __ANDROID__
++   if (setjmp(i_android_exit_environment) != 0)
++   {
++      return i_android_exit_code;
++   }
++#endif
++
+    // Print date and time in the Load/Save Game menus in the current locale
+    setlocale(LC_TIME, "");
+ 
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index c7c8206..fc72c95 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -197,8 +197,15 @@ set(WOOF_SOURCES
+     z_zone.c               z_zone.h
+ )
+ 
+-# Standard target definition
+-add_executable(woof ${WOOF_SOURCES})
++# Standard target definition. SDLActivity loads libmain.so and resolves the
++# SDL_main symbol produced by SDL_main.h, so Android needs a shared library
++# rather than a desktop executable.
++if(ANDROID)
++    add_library(woof SHARED ${WOOF_SOURCES})
++    set_target_properties(woof PROPERTIES OUTPUT_NAME main)
++else()
++    add_executable(woof ${WOOF_SOURCES})
++endif()
+ target_woof_settings(woof)
+ target_include_directories(woof PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/../")
+ 
+@@ -300,6 +307,7 @@ if(WOOF_STRICT)
+ endif()
+ 
+ # Setup tool
++if(NOT ANDROID)
+ set(SETUP_SOURCES
+     d_iwad.c                d_iwad.h
+     i_exit.c                i_exit.h
+@@ -340,6 +348,7 @@ target_link_libraries(
+ if(MSVC)
+     target_link_options(woof-setup PRIVATE "/MANIFEST:NO")
+ endif()
++endif()
+ 
+ # Base file
+ add_dependencies(woof woof-base)
+@@ -356,6 +365,7 @@ endif()
+ # Install
+ #
+ # Files to package in our distribution.
++if(NOT ANDROID)
+ if(WIN32)
+     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.21 AND NOT VCPKG_TOOLCHAIN)
+         install(
+@@ -371,4 +381,5 @@ if(WIN32)
+     endif()
+ else()
+     install(TARGETS woof woof-setup RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+ endif()
++endif()

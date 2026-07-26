@@ -1,0 +1,4 @@
+Patch File for DeHackEd v3.0
+# Deterministic no-op compatibility fixture
+Doom version = 19
+Patch format = 6

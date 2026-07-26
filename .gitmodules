@@ -1,0 +1,11 @@
+[submodule "third_party/woof"]
+	path = third_party/woof
+	url = https://github.com/fabiangreffrath/woof.git
+
+[submodule "third_party/openal-soft"]
+	path = third_party/openal-soft
+	url = https://github.com/kcat/openal-soft.git
+
+[submodule "third_party/freedoom"]
+	path = third_party/freedoom
+	url = https://github.com/freedoom/freedoom.git

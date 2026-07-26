@@ -1,0 +1,18 @@
+.gradle/
+.gradle-user-home/
+.idea/
+.kotlin/
+.toolchains/
+**/.cxx/
+**/.externalNativeBuild/
+**/build/
+local.properties
+captures/
+*.iml
+*.jks
+*.keystore
+keystore.properties
+
+# Generated native dependency artifacts.
+app/libs/*.aar
+app/src/main/assets/runtime/

@@ -1,0 +1,42 @@
+cmake_minimum_required(VERSION 3.26)
+project(cinderhell_native LANGUAGES C CXX)
+
+find_package(SDL3 REQUIRED CONFIG)
+
+set(LIBTYPE STATIC CACHE STRING "" FORCE)
+set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
+set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(ALSOFT_TESTS OFF CACHE BOOL "" FORCE)
+set(ALSOFT_INSTALL OFF CACHE BOOL "" FORCE)
+set(ALSOFT_INSTALL_CONFIG OFF CACHE BOOL "" FORCE)
+set(ALSOFT_INSTALL_HRTF_DATA OFF CACHE BOOL "" FORCE)
+set(ALSOFT_INSTALL_AMBDEC_PRESETS OFF CACHE BOOL "" FORCE)
+set(ALSOFT_INSTALL_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(ALSOFT_INSTALL_UTILS OFF CACHE BOOL "" FORCE)
+set(ALSOFT_BACKEND_OBOE OFF CACHE BOOL "" FORCE)
+set(ALSOFT_BACKEND_OPENSL ON CACHE BOOL "" FORCE)
+set(ALSOFT_BACKEND_WAVE OFF CACHE BOOL "" FORCE)
+set(ALSOFT_EMBED_HRTF_DATA OFF CACHE BOOL "" FORCE)
+add_subdirectory(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/openal-soft"
+    "${CMAKE_CURRENT_BINARY_DIR}/openal-soft"
+    EXCLUDE_FROM_ALL)
+
+option(CINDERHELL_NATIVE_SMOKE "Build the native bootstrap smoke renderer instead of Woof" OFF)
+
+if(CINDERHELL_NATIVE_SMOKE)
+    add_library(main SHARED bootstrap.c)
+    target_compile_features(main PRIVATE c_std_11)
+    target_compile_options(main PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(main PRIVATE SDL3::SDL3 OpenAL::OpenAL)
+else()
+    set(WITH_SNDFILE OFF CACHE BOOL "" FORCE)
+    set(WITH_FLUIDSYNTH OFF CACHE BOOL "" FORCE)
+    set(WITH_XMP OFF CACHE BOOL "" FORCE)
+    set(WITH_DISCORD_RPC OFF CACHE BOOL "" FORCE)
+    set(ENABLE_FONTGEN OFF CACHE BOOL "" FORCE)
+
+    add_subdirectory(
+        "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/woof"
+        "${CMAKE_CURRENT_BINARY_DIR}/woof")
+endif()
