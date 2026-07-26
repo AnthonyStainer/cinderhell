@@ -126,10 +126,11 @@ Cinderhell does not include commercial Doom game data. Importing a commercial
 IWAD requires a copy you are entitled to use. Freedoom 0.13.0 provides the
 redistributable first-run game.
 
-Cinderhell is distributed under [GPL-2.0-or-later](LICENSE). SDL3, OpenAL Soft,
-Freedoom, Woof, and the other packaged components retain their respective
-licenses. Exact revisions, checksums, and SPDX-style license identifiers are
-recorded in
+Cinderhell is distributed under
+[GPL-2.0-or-later](NOTICE.md), with the full GPL version 2 terms in
+[LICENSE](LICENSE). SDL3, OpenAL Soft, Freedoom, Woof, and the other packaged
+components retain their respective licenses. Exact revisions, checksums, and
+SPDX-style license identifiers are recorded in
 [`third_party/dependencies.lock.toml`](third_party/dependencies.lock.toml).
 Release artifacts include full notices and corresponding source; see
 [`THIRD_PARTY_NOTICES.txt`](app/src/main/assets/legal/THIRD_PARTY_NOTICES.txt)

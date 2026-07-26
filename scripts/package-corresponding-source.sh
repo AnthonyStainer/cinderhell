@@ -34,6 +34,7 @@ cp -a \
 cp -a \
     "${repo_root}/README.md" \
     "${repo_root}/LICENSE" \
+    "${repo_root}/NOTICE.md" \
     "${repo_root}/CHANGELOG.md" \
     "${repo_root}/CONTRIBUTING.md" \
     "${repo_root}/SECURITY.md" \

@@ -21,10 +21,10 @@
 
 - [x] 4.1 Add Dependabot, security policy, contribution guide, changelog, ownership, and issue templates
 - [x] 4.2 Update README and release documentation with release channels, versioning, signing recovery, and publication procedure
-- [ ] 4.3 Configure GitHub security automation and protect `main` with the Android build check
+- [x] 4.3 Configure GitHub security automation and protect `main` with the Android build check
 
 ## 5. Verification and First Draft
 
 - [x] 5.1 Run unit, build, APK inspection, archive-content, license, versioning, and OpenSpec validation gates
-- [ ] 5.2 Commit and push the release foundation, then confirm the required `main` workflow succeeds
+- [x] 5.2 Commit and push the release foundation, then confirm the required `main` workflow succeeds
 - [ ] 5.3 Create `v0.1.0-preview.1`, verify the release workflow and draft assets, and retain the release as an unpublished prerelease
