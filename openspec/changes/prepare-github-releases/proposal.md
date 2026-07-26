@@ -11,7 +11,7 @@ Cinderhell can already produce a verified preview APK and corresponding-source a
 - Derive release version metadata from validated Git tags while keeping local development builds deterministic.
 - Sign preview releases with a dedicated, recoverable signing identity supplied through a protected GitHub environment.
 - Publish verified tag builds as draft GitHub prereleases with an arm64 APK, corresponding source, checksums, and generated release notes.
-- Harden the repository foundation with protected release permissions, dependency automation, action pinning, and contributor/security templates where practical.
+- Harden the repository foundation with protected release permissions, vulnerability reporting, action pinning, contributor/security templates, and one low-frequency grouped dependency-update stream.
 
 ## Capabilities
 

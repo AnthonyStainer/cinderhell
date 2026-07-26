@@ -66,9 +66,9 @@ Android platform backup is disabled for the application. Imported commercial WAD
 
 The app receives a simple adaptive launcher icon built from repository-native Android vector resources. This avoids an opaque binary design dependency and gives Android a safe monochrome foreground for themed icons. Visual refinement can iterate without changing release identity.
 
-### Repository maintenance baseline
+### Low-noise repository maintenance baseline
 
-GitHub Actions are pinned to immutable commit SHAs, Gradle caching is enabled, Dependabot is configured for Actions and Gradle, and security/contribution/issue guidance is added. `main` will require the Android build check while allowing repository administrators to perform emergency maintenance.
+GitHub Actions are pinned to immutable commit SHAs, Gradle caching is enabled, vulnerability alerts and private reporting are enabled, and security/contribution/issue guidance is added. Dependabot combines GitHub Actions and Gradle updates into at most one quarterly foundation PR with cooldowns, which the maintainer workflow owns through review and CI. Native submodules are excluded because changing them also requires coordinated lockfile checksums, corresponding-source review, Woof patch validation, and runtime compatibility testing. `main` requires the Android build check while allowing repository administrators to perform emergency maintenance.
 
 ## Risks / Trade-offs
 
@@ -76,7 +76,8 @@ GitHub Actions are pinned to immutable commit SHAs, Gradle caching is enabled, D
 - [Preview-key loss breaks preview upgrades] → Keep an owner-readable recovery copy outside the repository and verify its certificate against published APKs.
 - [Tag/version-code formula eventually constrains large version components] → Validate bounds centrally and replace the scheme before reaching them; current `0.x` development is far from the limit.
 - [Draft releases still require a manual publish decision] → Prefer deliberate tester distribution over automatic publication; the release is otherwise complete and ready to inspect.
-- [Pinned action SHAs are less readable] → Retain version comments and let Dependabot propose reviewed updates.
+- [Pinned action SHAs are less readable] → Retain version comments and review upstream releases intentionally.
+- [Grouped updates can combine incompatible toolchain changes] → Keep the group to one reviewable PR, require the Android check, and adjust or split the update during maintainer review.
 - [Disabling backup removes convenient implicit device migration] → Avoid silently transferring copyrighted IWADs and add intentional export later.
 
 ## Migration Plan

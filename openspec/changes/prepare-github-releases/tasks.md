@@ -19,7 +19,7 @@
 
 ## 4. Repository Foundation
 
-- [x] 4.1 Add Dependabot, security policy, contribution guide, changelog, ownership, and issue templates
+- [x] 4.1 Add low-noise grouped Dependabot updates, security policy, contribution guide, changelog, ownership, and issue templates
 - [x] 4.2 Update README and release documentation with release channels, versioning, signing recovery, and publication procedure
 - [x] 4.3 Configure GitHub security automation and protect `main` with the Android build check
 
