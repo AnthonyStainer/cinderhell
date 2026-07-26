@@ -69,7 +69,7 @@ Woof owns gameplay, rendering, audio, saves, and advanced engine settings.
 The checked-in Gradle wrapper and dependency lock are authoritative. A Linux
 build requires Git, Python 3, curl, unzip, an Android SDK, and the Android
 components listed in [docs/toolchain.md](docs/toolchain.md), including JDK 17,
-SDK 35, build-tools 35.0.0, NDK 27.0.12077973, and CMake 3.31.6.
+compile SDK 37.0, build-tools 36.0.0, NDK 27.0.12077973, and CMake 3.31.6.
 
 ```sh
 git clone --recurse-submodules https://github.com/AnthonyStainer/cinderhell.git
