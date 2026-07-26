@@ -1,0 +1,112 @@
+name: Preview release
+
+on:
+  push:
+    tags:
+      - "v*-preview.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build draft prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: preview-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+
+      - name: Resolve release version
+        id: version
+        run: ./scripts/resolve-release-version.py "$GITHUB_REF_NAME" --format github >> "$GITHUB_OUTPUT"
+
+      - name: Require dedicated preview signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.CINDERHELL_PREVIEW_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.CINDERHELL_PREVIEW_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.CINDERHELL_PREVIEW_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.CINDERHELL_PREVIEW_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/cinderhell-preview.jks"
+          chmod 600 "$RUNNER_TEMP/cinderhell-preview.jks"
+
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android toolchain
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973" "cmake;3.31.6"
+
+      - name: Fetch pinned runtime artifacts
+        run: ./scripts/fetch-native-dependencies.sh
+
+      - name: Verify generated compatibility corpus
+        run: |
+          ./scripts/build-test-corpus.py
+          (cd test-corpus/generated && sha256sum --check SHA256SUMS)
+
+      - name: Build signed preview and corresponding source
+        env:
+          CINDERHELL_RELEASE_VERSION: ${{ steps.version.outputs.artifact_version }}
+          CINDERHELL_VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          CINDERHELL_VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          CINDERHELL_REQUIRE_PREVIEW_SIGNING: "true"
+          CINDERHELL_PREVIEW_KEYSTORE_FILE: ${{ runner.temp }}/cinderhell-preview.jks
+          CINDERHELL_PREVIEW_KEYSTORE_PASSWORD: ${{ secrets.CINDERHELL_PREVIEW_KEYSTORE_PASSWORD }}
+          CINDERHELL_PREVIEW_KEY_ALIAS: ${{ secrets.CINDERHELL_PREVIEW_KEY_ALIAS }}
+          CINDERHELL_PREVIEW_KEY_PASSWORD: ${{ secrets.CINDERHELL_PREVIEW_KEY_PASSWORD }}
+        run: ./scripts/build-preview.sh
+
+      - name: Verify release metadata and checksums
+        env:
+          VERSION: ${{ steps.version.outputs.artifact_version }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+        run: |
+          ./scripts/inspect-apk-metadata.sh \
+            "build/release/cinderhell-${VERSION}-arm64.apk" \
+            "io.github.anthonystainer.cinderhell.preview" \
+            "$VERSION_NAME" \
+            "$VERSION_CODE"
+          (cd build/release && sha256sum --check SHA256SUMS)
+
+      - name: Create or update draft prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.artifact_version }}
+        run: |
+          apk="build/release/cinderhell-${VERSION}-arm64.apk"
+          source="build/release/cinderhell-${VERSION}-corresponding-source.tar.gz"
+          checksums="build/release/SHA256SUMS"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$apk" "$source" "$checksums" --clobber
+            gh release edit "$TAG" \
+              --draft \
+              --prerelease \
+              --title "Cinderhell ${VERSION}"
+          else
+            gh release create "$TAG" "$apk" "$source" "$checksums" \
+              --draft \
+              --prerelease \
+              --generate-notes \
+              --title "Cinderhell ${VERSION}" \
+              --verify-tag
+          fi

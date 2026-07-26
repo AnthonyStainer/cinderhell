@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest a focused improvement that fits Cinderhell's product scope.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed experience
+      description: Describe the smallest useful behavior from a player's perspective.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: I understand Cinderhell deliberately targets one Doom engine and a controller-first experience.
+          required: true

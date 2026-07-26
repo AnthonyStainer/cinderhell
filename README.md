@@ -1,6 +1,7 @@
 # Cinderhell
 
 [![Android](https://github.com/AnthonyStainer/cinderhell/actions/workflows/android.yml/badge.svg)](https://github.com/AnthonyStainer/cinderhell/actions/workflows/android.yml)
+[![License: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue.svg)](LICENSE)
 
 **One excellent Doom engine, presented as a polished Android game rather than
 an engine-launching toolkit.**
@@ -18,7 +19,9 @@ Cinderhell 0.1 is a working MVP targeting `arm64-v8a` handhelds:
 - The complete controller-only flow has been validated on an AYN Thor.
 - Doom, Doom II, TNT, Plutonia, Freedoom, and Woof-compatible vanilla, Boom,
   MBF, and MBF21 content are in scope.
-- The preview APK is an internally signed test build, not a public release.
+- Preview builds are distributed through
+  [GitHub Releases](https://github.com/AnthonyStainer/cinderhell/releases) as
+  signed, checksummed `arm64-v8a` APKs with corresponding source.
 - Bluetooth gamepads may work through SDL on a best-effort basis, but mappings,
   rumble, and reconnect behavior are not currently validated or supported.
 
@@ -80,8 +83,10 @@ ANDROID_HOME=/path/to/Android/Sdk \
 ./scripts/build-preview.sh
 ```
 
-The signed internal preview APK, corresponding-source archive, and their
-SHA-256 files are written to `build/release/`.
+The locally signed preview APK, corresponding-source archive, and combined
+`SHA256SUMS` manifest are written to `build/release/`. Without the maintainer's
+dedicated signing environment, local preview builds use Android's development
+key and are not suitable for distribution.
 
 For a quicker development check after fetching dependencies:
 
@@ -94,6 +99,7 @@ openspec validate --all --strict
 Physical instrumentation requires an arm64 Android device:
 
 ```sh
+./scripts/apply-native-patches.sh
 ANDROID_SERIAL=<serial> ./gradlew connectedDebugAndroidTest
 ```
 
@@ -102,16 +108,28 @@ More detail is available in the
 [release guide](docs/release.md), and
 [compatibility matrix](docs/compatibility-matrix.md).
 
+## Releases
+
+Preview tags follow `vMAJOR.MINOR.PATCH-preview.N`. A matching tag builds and
+verifies an upgrade-compatible preview APK, then creates an unpublished draft
+GitHub prerelease. A maintainer smoke-tests and explicitly publishes that draft.
+See the [release guide](docs/release.md) for the version-code scheme, signing
+boundary, artifact contract, and recovery procedure.
+
+Preview, production, and development builds deliberately use distinct Android
+package IDs. Builds made before the first public preview used provisional IDs
+and do not migrate in place.
+
 ## Game data and licensing
 
 Cinderhell does not include commercial Doom game data. Importing a commercial
 IWAD requires a copy you are entitled to use. Freedoom 0.13.0 provides the
 redistributable first-run game.
 
-Woof and Cinderhell's Woof Android changes are distributed under
-GPL-2.0-or-later terms. SDL3, OpenAL Soft, Freedoom, and the other packaged
-components retain their respective licenses. Exact revisions, checksums, and
-license identifiers are recorded in
+Cinderhell is distributed under [GPL-2.0-or-later](LICENSE). SDL3, OpenAL Soft,
+Freedoom, Woof, and the other packaged components retain their respective
+licenses. Exact revisions, checksums, and SPDX-style license identifiers are
+recorded in
 [`third_party/dependencies.lock.toml`](third_party/dependencies.lock.toml).
 Release artifacts include full notices and corresponding source; see
 [`THIRD_PARTY_NOTICES.txt`](app/src/main/assets/legal/THIRD_PARTY_NOTICES.txt)

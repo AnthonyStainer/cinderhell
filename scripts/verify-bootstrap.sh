@@ -54,8 +54,19 @@ grep -Fq 'abiFilters += "arm64-v8a"' "${repo_root}/app/build.gradle.kts" || {
     echo "arm64-v8a-only packaging policy is missing." >&2
     exit 1
 }
+grep -Fq 'applicationId = "io.github.anthonystainer.cinderhell"' \
+    "${repo_root}/app/build.gradle.kts" || {
+    echo "The permanent Cinderhell application ID is missing." >&2
+    exit 1
+}
+grep -Fq 'android:allowBackup="false"' "${manifest}" &&
+    grep -Fq 'android:fullBackupContent="false"' "${manifest}" || {
+    echo "Android backup and transfer must remain explicitly disabled." >&2
+    exit 1
+}
 
 required_legal_files=(
+    "${repo_root}/LICENSE"
     "${repo_root}/app/src/main/assets/legal/THIRD_PARTY_NOTICES.txt"
     "${repo_root}/app/src/main/assets/legal/CORRESPONDING_SOURCE.txt"
     "${repo_root}/third_party/woof/COPYING"
@@ -65,6 +76,18 @@ required_legal_files=(
 for legal_file in "${required_legal_files[@]}"; do
     [[ -s "${legal_file}" ]] || {
         echo "Missing license or source metadata: ${legal_file}" >&2
+        exit 1
+    }
+done
+
+required_icon_files=(
+    "${repo_root}/app/src/main/res/mipmap-anydpi/ic_launcher.xml"
+    "${repo_root}/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+    "${repo_root}/app/src/main/res/drawable/ic_launcher_monochrome.xml"
+)
+for icon_file in "${required_icon_files[@]}"; do
+    [[ -s "${icon_file}" ]] || {
+        echo "Missing launcher icon resource: ${icon_file}" >&2
         exit 1
     }
 done

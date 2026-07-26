@@ -2,8 +2,9 @@ Cinderhell corresponding source
 ================================
 
 The complete, machine-readable source for this exact application build,
-including Cinderhell, the Woof Android patch, Woof, OpenAL Soft, SDL 3, and
-the Freedoom data source, is supplied in the release artifact named:
+including the root GPL license, Cinderhell, its OpenSpec contracts, the Woof
+Android patch, Woof, OpenAL Soft, SDL 3, and the Freedoom data source, is
+supplied in the release artifact named:
 
     cinderhell-<version>-corresponding-source.tar.gz
 

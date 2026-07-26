@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-version="${CINDERHELL_RELEASE_VERSION:-0.1.0-preview}"
+version="${CINDERHELL_RELEASE_VERSION:-0.1.0-preview.local}"
 output_dir="${repo_root}/build/release"
 download_dir="${repo_root}/build/dependency-downloads"
 sdl_archive="${download_dir}/SDL-source-8e37db5.tar.gz"
@@ -32,9 +32,15 @@ cp -a \
     "${repo_root}/app/proguard-rules.pro" \
     "${destination}/app/"
 cp -a \
+    "${repo_root}/README.md" \
+    "${repo_root}/LICENSE" \
+    "${repo_root}/CHANGELOG.md" \
+    "${repo_root}/CONTRIBUTING.md" \
+    "${repo_root}/SECURITY.md" \
     "${repo_root}/native" \
     "${repo_root}/scripts" \
     "${repo_root}/docs" \
+    "${repo_root}/openspec" \
     "${repo_root}/test-corpus" \
     "${repo_root}/.github" \
     "${repo_root}/gradle" \

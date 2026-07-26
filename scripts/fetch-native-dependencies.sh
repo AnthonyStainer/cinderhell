@@ -38,7 +38,6 @@ unzip -p "${freedoom_zip}" freedoom-0.13.0/freedoom2.wad > "${repo_root}/app/src
 echo "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b  ${repo_root}/app/src/main/assets/runtime/freedoom2.wad.part" | sha256sum --check
 mv "${repo_root}/app/src/main/assets/runtime/freedoom2.wad.part" "${repo_root}/app/src/main/assets/runtime/freedoom2.wad"
 
-"${repo_root}/scripts/apply-native-patches.sh"
 "${repo_root}/scripts/build-woof-pk3.py"
 
 echo "Native release artifacts are present and verified."

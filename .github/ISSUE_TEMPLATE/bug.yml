@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem in Cinderhell.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Please remove commercial game data and private paths from logs before attaching them.
+  - type: input
+    id: version
+    attributes:
+      label: Cinderhell version
+      description: The version shown on the GitHub Release or in Android app info.
+      placeholder: 0.1.0-preview.1
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: AYN Thor, Android 13
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Include what you expected and exact reproduction steps.
+    validations:
+      required: true
+  - type: textarea
+    id: content
+    attributes:
+      label: Content details
+      description: Name the IWAD/mod and public source; do not upload commercial WADs.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Attach relevant Cinderhell or adb logs after reviewing them for private data.

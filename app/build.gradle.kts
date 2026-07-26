@@ -6,17 +6,39 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val cinderhellVersionName =
+    providers.environmentVariable("CINDERHELL_VERSION_NAME").orElse("0.1.0-dev").get()
+val cinderhellVersionCode =
+    providers.environmentVariable("CINDERHELL_VERSION_CODE").orElse("1000000").get().toInt()
+val previewSigningValues = listOf(
+    "CINDERHELL_PREVIEW_KEYSTORE_FILE",
+    "CINDERHELL_PREVIEW_KEYSTORE_PASSWORD",
+    "CINDERHELL_PREVIEW_KEY_ALIAS",
+    "CINDERHELL_PREVIEW_KEY_PASSWORD",
+).associateWith { providers.environmentVariable(it).orNull }
+val configuredPreviewSigning = previewSigningValues.values.all { !it.isNullOrBlank() }
+val partiallyConfiguredPreviewSigning = previewSigningValues.values.any { !it.isNullOrBlank() }
+val requirePreviewSigning =
+    providers.environmentVariable("CINDERHELL_REQUIRE_PREVIEW_SIGNING").orNull == "true"
+
+check(!partiallyConfiguredPreviewSigning || configuredPreviewSigning) {
+    "Preview signing must provide all CINDERHELL_PREVIEW_* environment variables."
+}
+check(!requirePreviewSigning || configuredPreviewSigning) {
+    "A release preview requires the dedicated Cinderhell preview signing identity."
+}
+
 android {
     namespace = "dev.cinderhell"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
-        applicationId = "dev.cinderhell"
+        applicationId = "io.github.anthonystainer.cinderhell"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = cinderhellVersionCode
+        versionName = cinderhellVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -31,6 +53,18 @@ android {
         externalNativeBuild {
             cmake {
                 arguments += "-DANDROID_STL=c++_shared"
+            }
+        }
+    }
+
+    signingConfigs {
+        if (configuredPreviewSigning) {
+            create("previewRelease") {
+                storeFile = file(checkNotNull(previewSigningValues["CINDERHELL_PREVIEW_KEYSTORE_FILE"]))
+                storePassword =
+                    checkNotNull(previewSigningValues["CINDERHELL_PREVIEW_KEYSTORE_PASSWORD"])
+                keyAlias = checkNotNull(previewSigningValues["CINDERHELL_PREVIEW_KEY_ALIAS"])
+                keyPassword = checkNotNull(previewSigningValues["CINDERHELL_PREVIEW_KEY_PASSWORD"])
             }
         }
     }
@@ -51,8 +85,11 @@ android {
         create("preview") {
             initWith(getByName("release"))
             applicationIdSuffix = ".preview"
-            versionNameSuffix = "-preview"
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (configuredPreviewSigning) {
+                signingConfigs.getByName("previewRelease")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             matchingFallbacks += listOf("release")
         }
     }

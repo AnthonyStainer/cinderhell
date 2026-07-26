@@ -3,6 +3,8 @@
 .idea/
 .kotlin/
 .toolchains/
+__pycache__/
+*.py[cod]
 **/.cxx/
 **/.externalNativeBuild/
 **/build/
