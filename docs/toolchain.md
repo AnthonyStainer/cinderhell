@@ -4,14 +4,16 @@ The MVP build is pinned to the following baseline:
 
 | Component | Version |
 | --- | --- |
-| Application ID | `dev.cinderhell` (`.debug` suffix for debug builds) |
-| Compile / target SDK | 35 |
+| Application ID | `io.github.anthonystainer.cinderhell` (`.debug` / `.preview` build suffixes) |
+| Compile SDK | 37.0 |
+| Target SDK | 35 |
+| SDK Build Tools | 36.0.0 |
 | Minimum SDK | 26 |
 | Java bytecode target | 17 |
 | Verified Gradle JVM | Eclipse Temurin 17.0.19+10 |
-| Gradle | 8.9 |
-| Android Gradle Plugin | 8.7.3 |
-| Kotlin / Compose compiler plugin | 2.1.21 |
+| Gradle | 9.6.0 |
+| Android Gradle Plugin | 9.3.1 |
+| Kotlin / Compose compiler plugin | 2.4.0 |
 | Compose BOM | 2024.12.01 |
 | Android NDK | 27.0.12077973 |
 | CMake | 3.31.6 |
@@ -20,8 +22,7 @@ The MVP build is pinned to the following baseline:
 The checked-in Gradle wrapper is authoritative. The Gradle JVM archive used for
 local verification is pinned by `scripts/fetch-jdk.sh` with SHA-256
 `d8afc263758141a66e0e3aafc321e783f7016696f4eaea067d340a269037d331`.
-The host's OpenJDK 25 is not compatible with this AGP/Kotlin baseline.
 `local.properties` is developer-local; CI sets `ANDROID_HOME` explicitly.
 
-The package ID is suitable for development and internal previews. It must be
-revisited together with signing ownership before the first public store release.
+The target SDK remains 35 so adopting the newer compile SDK does not opt the app
+into Android 17 runtime behavior changes.

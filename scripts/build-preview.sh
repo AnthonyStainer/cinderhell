@@ -35,7 +35,7 @@ apk="build/release/cinderhell-${version}-arm64.apk"
 cp app/build/outputs/apk/preview/app-preview.apk \
     "${apk}"
 
-build_tools="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/build-tools/35.0.0"
+build_tools="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/build-tools/36.0.0"
 if [[ -x "${build_tools}/apksigner" ]]; then
     "${build_tools}/apksigner" verify --verbose \
         "${apk}"
