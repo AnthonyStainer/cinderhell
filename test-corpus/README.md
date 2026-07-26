@@ -14,6 +14,9 @@ The corpus covers:
 - deterministic PK3 and ZIP containers;
 - DEH, BEX, and MBF21 patch parser/launch combinations.
 
+The generated archive fixtures use stored ZIP entries so their checksums do
+not vary between zlib implementations.
+
 Known commercial IWAD identities are checked by catalogue/hash tests, not by
 redistributing copyrighted IWADs. A user-owned IWAD can be substituted during
 device testing without entering the repository or release artifacts.

@@ -48,6 +48,6 @@ check_asset \
     "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
 check_asset \
     "assets/runtime/woof.pk3" \
-    "ebd6dac1b3761b468d7d2982e9b641e98975c4f3e05e06f0f9767d9967ba6a31"
+    "15a36e6342f2b883143eba06c993ea3ff0c6cfa49a91de7a17b524979388b2ab"
 
 echo "APK contains only arm64-v8a, the native runtime, verified data, and legal notices."

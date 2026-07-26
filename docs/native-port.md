@@ -32,7 +32,8 @@ disabled.
 
 Woof's `woof.pk3` is built from its authoritative `BASE_SOURCES` list by
 `scripts/build-woof-pk3.py`. The script normalizes ZIP ordering, timestamps,
-permissions, and compression so the output has a stable SHA-256 digest.
+and permissions and uses stored entries so the output has a stable SHA-256
+digest across zlib and zlib-ng hosts.
 Both that PK3 and Freedoom are copied from APK assets to application-private
 ordinary files, then verified before `SDL_main` receives their paths.
 

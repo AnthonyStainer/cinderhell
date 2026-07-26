@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Woof's required base PK3 with reproducible ZIP metadata."""
+"""Build Woof's required base PK3 with reproducible ZIP bytes."""
 
 from __future__ import annotations
 
@@ -47,8 +47,7 @@ def build() -> str:
         with zipfile.ZipFile(
             temporary,
             mode="w",
-            compression=zipfile.ZIP_DEFLATED,
-            compresslevel=9,
+            compression=zipfile.ZIP_STORED,
         ) as archive:
             for relative in sources:
                 source = BASE_DIR / relative
@@ -56,10 +55,12 @@ def build() -> str:
                     raise RuntimeError(f"Missing Woof base asset: {relative}")
 
                 info = zipfile.ZipInfo(relative, date_time=(1980, 1, 1, 0, 0, 0))
-                info.compress_type = zipfile.ZIP_DEFLATED
+                # Stored entries avoid implementation-specific DEFLATE output
+                # across CPython's zlib and zlib-ng builds.
+                info.compress_type = zipfile.ZIP_STORED
                 info.create_system = 3
                 info.external_attr = 0o100644 << 16
-                archive.writestr(info, source.read_bytes(), compresslevel=9)
+                archive.writestr(info, source.read_bytes())
 
         os.replace(temporary, OUTPUT)
     finally:

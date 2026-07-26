@@ -52,13 +52,14 @@ def map01_lumps() -> list[tuple[str, bytes]]:
 
 
 def write_zip(path: Path, entries: dict[str, bytes]) -> None:
-    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_STORED) as archive:
         for name in sorted(entries):
             info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
-            info.compress_type = zipfile.ZIP_DEFLATED
+            # Stored entries are byte-identical across zlib implementations.
+            info.compress_type = zipfile.ZIP_STORED
             info.create_system = 3
             info.external_attr = 0o100644 << 16
-            archive.writestr(info, entries[name], compresslevel=9)
+            archive.writestr(info, entries[name])
 
 
 def build() -> None:

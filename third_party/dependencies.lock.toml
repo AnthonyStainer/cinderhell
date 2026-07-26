@@ -8,7 +8,7 @@ revision = "5f7a0def133056cb527312f2376b3088adb863fc"
 upstream_ref = "master"
 pin_reason = "First unreleased upstream line using SDL3 >= 3.4; exact commit required until the SDL3 port receives a release tag."
 license = "GPL-2.0-or-later with per-file exceptions documented upstream"
-woof_pk3_sha256 = "ebd6dac1b3761b468d7d2982e9b641e98975c4f3e05e06f0f9767d9967ba6a31"
+woof_pk3_sha256 = "15a36e6342f2b883143eba06c993ea3ff0c6cfa49a91de7a17b524979388b2ab"
 path = "third_party/woof"
 
 [sdl3]

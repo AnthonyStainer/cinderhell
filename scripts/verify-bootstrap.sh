@@ -6,7 +6,7 @@ lock_file="${repo_root}/third_party/dependencies.lock.toml"
 
 required_lock_values=(
     "5f7a0def133056cb527312f2376b3088adb863fc"
-    "ebd6dac1b3761b468d7d2982e9b641e98975c4f3e05e06f0f9767d9967ba6a31"
+    "15a36e6342f2b883143eba06c993ea3ff0c6cfa49a91de7a17b524979388b2ab"
     "8e37db5e797b6167f3a00d697d816a684bd259c7"
     "dc7d7054a5b4f3bec1dc23a42fd616a0847af948"
     "cfb8644b1a8dc7d7d2177e6a892ccaa2922bdaae"
@@ -42,7 +42,7 @@ check_file \
     "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
 check_file \
     "${repo_root}/app/src/main/assets/runtime/woof.pk3" \
-    "ebd6dac1b3761b468d7d2982e9b641e98975c4f3e05e06f0f9767d9967ba6a31"
+    "15a36e6342f2b883143eba06c993ea3ff0c6cfa49a91de7a17b524979388b2ab"
 
 manifest="${repo_root}/app/src/main/AndroidManifest.xml"
 if grep -Fq "MANAGE_EXTERNAL_STORAGE" "${manifest}"; then
