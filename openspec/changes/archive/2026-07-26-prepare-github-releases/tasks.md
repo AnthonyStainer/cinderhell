@@ -27,4 +27,4 @@
 
 - [x] 5.1 Run unit, build, APK inspection, archive-content, license, versioning, and OpenSpec validation gates
 - [x] 5.2 Commit and push the release foundation, then confirm the required `main` workflow succeeds
-- [ ] 5.3 Create `v0.1.0-preview.1`, verify the release workflow and draft assets, and retain the release as an unpublished prerelease
+- [x] 5.3 Create `v0.1.0-preview.1`, verify the release workflow and draft assets, and retain the release as an unpublished prerelease
