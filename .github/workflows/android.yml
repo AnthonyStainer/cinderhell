@@ -49,7 +49,7 @@ jobs:
           ./scripts/inspect-apk.sh app/build/outputs/apk/preview/app-preview.apk
 
       - name: Verify preview signature
-        run: apksigner verify --verbose app/build/outputs/apk/preview/app-preview.apk
+        run: '"$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/preview/app-preview.apk'
 
       - name: Build corresponding-source archive
         run: ./scripts/package-corresponding-source.sh
