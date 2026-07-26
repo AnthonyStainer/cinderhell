@@ -5,6 +5,16 @@ All notable Cinderhell changes are recorded here. The project uses
 
 ## [Unreleased]
 
+### Changed
+
+- Reworked the launcher around a selected-profile Play hero, responsive
+  game/profile cards, explicit controller states, and consistent route and
+  operational feedback.
+- Added a complete no-device verification gate for periods when the target
+  handheld is unavailable.
+- Aligned Compose compile and runtime libraries and hardened physical
+  instrumentation against a sleeping target device.
+
 ### Planned
 
 - Bluetooth gamepad compatibility, rumble, and reconnect validation.

@@ -38,6 +38,8 @@ See the [acceptance gates](docs/acceptance-gates.md) and
   Original, Enhanced, or Handheld presets.
 - Offers one-action **Play** and contextual **Continue** without requiring
   source-port or command-line knowledge.
+- Uses a code-native, controller-readable ember-and-iron launcher with
+  independent focus, selection, busy, and error presentation.
 - Runs each game in a private `:game` process so every Woof session starts with
   clean native state and returns safely to the launcher.
 - Preserves profile-specific configuration, saves, screenshots, and recent
@@ -100,11 +102,12 @@ Physical instrumentation requires an arm64 Android device:
 
 ```sh
 ./scripts/apply-native-patches.sh
-ANDROID_SERIAL=<serial> ./gradlew connectedDebugAndroidTest
+ANDROID_SERIAL=<serial> ./scripts/run-device-tests.sh
 ```
 
 More detail is available in the
 [native port notes](docs/native-port.md),
+[launcher presentation guide](docs/launcher-presentation.md),
 [release guide](docs/release.md), and
 [compatibility matrix](docs/compatibility-matrix.md).
 

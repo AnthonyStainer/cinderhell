@@ -4,7 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 adb_bin="${ADB:-${ANDROID_HOME:-/var/home/anthony/Android/Sdk}/platform-tools/adb}"
 serial="${ANDROID_SERIAL:-}"
-package_name="${CINDERHELL_PACKAGE:-dev.cinderhell.debug}"
+package_name="${CINDERHELL_PACKAGE:-io.github.anthonystainer.cinderhell.debug}"
 case_name="${1:-}"
 output_dir="$repo_root/build/device-gates"
 device_tmp="/data/local/tmp/cinderhell-compat"

@@ -5,24 +5,25 @@ package dev.cinderhell.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,17 +32,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.cinderhell.input.ControllerDeviceState
 import dev.cinderhell.launcher.LauncherSnapshot
 import dev.cinderhell.library.ContentItemEntity
 import dev.cinderhell.library.ContentRemovalPlan
-import dev.cinderhell.library.ProfileWithEntries
 import dev.cinderhell.profile.PresetId
 import dev.cinderhell.profile.PresetReapplyPreview
 import dev.cinderhell.profile.ProfileEntryDraft
 import dev.cinderhell.profile.ProfilePresets
+import dev.cinderhell.ui.theme.CinderhellSpacing
 
 internal sealed interface LauncherRoute {
     data object Home : LauncherRoute
@@ -64,7 +65,7 @@ internal fun LauncherScreen(
     snapshot: LauncherSnapshot?,
     route: LauncherRoute,
     busy: Boolean,
-    statusMessage: String?,
+    statusNotice: LauncherNotice?,
     controller: ControllerDeviceState,
     focusedId: String?,
     removalPlan: ContentRemovalPlan?,
@@ -85,94 +86,82 @@ internal fun LauncherScreen(
     onConfirmPreset: () -> Unit,
     onDismissPreset: () -> Unit,
 ) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    CinderhellBackdrop {
         if (snapshot == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("CINDERHELL", style = MaterialTheme.typography.displaySmall)
-                    Spacer(Modifier.height(24.dp))
-                    CircularProgressIndicator()
-                    statusMessage?.let {
-                        Spacer(Modifier.height(16.dp))
-                        Text(it)
-                    }
-                }
+            LoadingLauncher(statusNotice)
+        } else {
+            BackHandler(enabled = route != LauncherRoute.Home) {
+                onRoute(LauncherRoute.Home)
             }
-            return@Surface
-        }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        horizontal = CinderhellSpacing.PageHorizontal,
+                        vertical = CinderhellSpacing.PageVertical,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                CinderhellWordmark(
+                    controllerLabel = if (controller.connected) {
+                        controller.name ?: "Controller ready"
+                    } else {
+                        "Controller disconnected"
+                    },
+                    controllerConnected = controller.connected,
+                )
+                LauncherStatusBanner(statusNotice, busy)
+                when (route) {
+                    LauncherRoute.Home -> HomeScreen(
+                        snapshot = snapshot,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onPlay = onPlay,
+                        onContinue = onContinue,
+                        onImport = onImport,
+                        onSelectGame = onSelectGame,
+                        onSelectProfile = onSelectProfile,
+                        onRoute = onRoute,
+                    )
 
-        BackHandler(enabled = route != LauncherRoute.Home) {
-            onRoute(LauncherRoute.Home)
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 28.dp, vertical = 18.dp),
-        ) {
-            Header(controller)
-            Spacer(Modifier.height(12.dp))
-            statusMessage?.let {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium,
-                ) {
-                    Text(
-                        text = it,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    is LauncherRoute.ProfileEditor -> ProfileEditorScreen(
+                        snapshot = snapshot,
+                        route = route,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onSave = onSaveProfile,
+                        onBack = { onRoute(LauncherRoute.Home) },
+                    )
+
+                    is LauncherRoute.Advanced -> AdvancedScreen(
+                        snapshot = snapshot,
+                        route = route,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onRequestPreset = onRequestPreset,
+                        onBack = { onRoute(LauncherRoute.Home) },
+                    )
+
+                    LauncherRoute.Library -> LibraryScreen(
+                        snapshot = snapshot,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onImport = onImport,
+                        onRequestRemoval = onRequestRemoval,
+                        onBack = { onRoute(LauncherRoute.Home) },
+                    )
+
+                    LauncherRoute.Notices -> NoticesScreen(
+                        noticesText = noticesText,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onBack = { onRoute(LauncherRoute.Home) },
                     )
                 }
-                Spacer(Modifier.height(10.dp))
-            }
-            when (route) {
-                LauncherRoute.Home -> HomeScreen(
-                    snapshot = snapshot,
-                    busy = busy,
-                    focusedId = focusedId,
-                    onFocused = onFocused,
-                    onPlay = onPlay,
-                    onContinue = onContinue,
-                    onImport = onImport,
-                    onSelectGame = onSelectGame,
-                    onSelectProfile = onSelectProfile,
-                    onRoute = onRoute,
-                )
-
-                is LauncherRoute.ProfileEditor -> ProfileEditorScreen(
-                    snapshot = snapshot,
-                    route = route,
-                    busy = busy,
-                    focusedId = focusedId,
-                    onFocused = onFocused,
-                    onSave = onSaveProfile,
-                    onBack = { onRoute(LauncherRoute.Home) },
-                )
-
-                is LauncherRoute.Advanced -> AdvancedScreen(
-                    snapshot = snapshot,
-                    route = route,
-                    busy = busy,
-                    focusedId = focusedId,
-                    onFocused = onFocused,
-                    onRequestPreset = onRequestPreset,
-                    onBack = { onRoute(LauncherRoute.Home) },
-                )
-
-                LauncherRoute.Library -> LibraryScreen(
-                    snapshot = snapshot,
-                    busy = busy,
-                    focusedId = focusedId,
-                    onFocused = onFocused,
-                    onImport = onImport,
-                    onRequestRemoval = onRequestRemoval,
-                    onBack = { onRoute(LauncherRoute.Home) },
-                )
-
-                LauncherRoute.Notices -> NoticesScreen(
-                    noticesText = noticesText,
-                    focusedId = focusedId,
-                    onFocused = onFocused,
-                    onBack = { onRoute(LauncherRoute.Home) },
-                )
             }
         }
     }
@@ -186,6 +175,7 @@ internal fun LauncherScreen(
                 "This also affects: ${plan.affectedProfiles.joinToString { it.name }}."
             },
             confirmId = "confirm-removal",
+            destructive = true,
             focusedId = focusedId,
             onFocused = onFocused,
             onConfirm = onConfirmRemoval,
@@ -210,34 +200,6 @@ internal fun LauncherScreen(
 }
 
 @Composable
-private fun Header(controller: ControllerDeviceState) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            "CINDERHELL",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Black,
-        )
-        Spacer(Modifier.weight(1f))
-        Text(
-            if (controller.connected) {
-                "● ${controller.name ?: "Controller"}"
-            } else {
-                "○ Controller disconnected"
-            },
-            color = if (controller.connected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.error
-            },
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
-}
-
-@Composable
 private fun HomeScreen(
     snapshot: LauncherSnapshot,
     busy: Boolean,
@@ -253,83 +215,263 @@ private fun HomeScreen(
     val selected = snapshot.profiles.singleOrNull {
         it.profile.profileId == snapshot.selectedProfileId
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    val presentation = snapshot.homePresentation()
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val wide = maxWidth >= 840.dp
+        if (wide) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(CinderhellSpacing.Section),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(0.88f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    PlayHero(
+                        snapshot = snapshot,
+                        presentation = presentation,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onPlay = onPlay,
+                        onContinue = onContinue,
+                    )
+                    Spacer(Modifier.height(CinderhellSpacing.Section))
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1.12f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(CinderhellSpacing.Section),
+                ) {
+                    SelectionPanels(
+                        snapshot = snapshot,
+                        selectedProfileId = selected?.profile?.profileId,
+                        selectedGameId = selected?.profile?.gameContentId,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onSelectGame = onSelectGame,
+                        onSelectProfile = onSelectProfile,
+                        onRoute = onRoute,
+                    )
+                    UtilityActions(
+                        selectedProfileId = selected?.profile?.profileId,
+                        busy = busy,
+                        focusedId = focusedId,
+                        onFocused = onFocused,
+                        onImport = onImport,
+                        onRoute = onRoute,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(CinderhellSpacing.Section),
+            ) {
+                PlayHero(
+                    snapshot = snapshot,
+                    presentation = presentation,
+                    busy = busy,
+                    focusedId = focusedId,
+                    onFocused = onFocused,
+                    onPlay = onPlay,
+                    onContinue = onContinue,
+                )
+                SelectionPanels(
+                    snapshot = snapshot,
+                    selectedProfileId = selected?.profile?.profileId,
+                    selectedGameId = selected?.profile?.gameContentId,
+                    busy = busy,
+                    focusedId = focusedId,
+                    onFocused = onFocused,
+                    onSelectGame = onSelectGame,
+                    onSelectProfile = onSelectProfile,
+                    onRoute = onRoute,
+                )
+                UtilityActions(
+                    selectedProfileId = selected?.profile?.profileId,
+                    busy = busy,
+                    focusedId = focusedId,
+                    onFocused = onFocused,
+                    onImport = onImport,
+                    onRoute = onRoute,
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlayHero(
+    snapshot: LauncherSnapshot,
+    presentation: HomePresentation?,
+    busy: Boolean,
+    focusedId: String?,
+    onFocused: (String) -> Unit,
+    onPlay: () -> Unit,
+    onContinue: () -> Unit,
+) {
+    EmberPanel(modifier = Modifier.fillMaxWidth(), highlighted = true) {
         if (snapshot.firstRun) {
-            Text("One great Doom engine. Your games, one button away.")
+            MetadataPill("Ready out of the box", accent = true)
+            Text(
+                "One great Doom engine. Your games, one button away.",
+                style = MaterialTheme.typography.titleLarge,
+            )
             Text(
                 "Freedoom is ready now. Import a Doom game whenever you like.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
-        snapshot.continueSummary?.let { recent ->
-            Text("Continue", style = MaterialTheme.typography.titleLarge)
+        RouteHeading(
+            eyebrow = "Ready to play",
+            title = presentation?.gameName ?: "Choose a game",
+            detail = presentation?.profileName
+                ?: "Select an installed game or create a profile.",
+        )
+        presentation?.let {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                MetadataPill(it.presetName, accent = true)
+                MetadataPill(it.modSummary)
+                MetadataPill("Woof")
+            }
+        }
+        ControllerButton(
+            id = "play",
+            focusedId = focusedId,
+            onFocused = onFocused,
+            onClick = onPlay,
+            enabled = !busy && presentation != null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 58.dp),
+            role = ControllerButtonRole.PRIMARY,
+        ) {
+            Text(
+                if (busy) "Preparing…" else presentation?.playLabel ?: "Choose a profile",
+                style = MaterialTheme.typography.titleLarge,
+            )
+        }
+        presentation?.continueTitle?.let { continueTitle ->
+            SectionHeading("Continue", "Latest save")
             ControllerButton(
                 id = "continue",
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = onContinue,
                 enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+                role = ControllerButtonRole.SECONDARY,
             ) {
                 Column {
-                    Text("${recent.gameName} — ${recent.latestLevel}")
-                    Text(recent.profileName, style = MaterialTheme.typography.labelMedium)
+                    Text(continueTitle, style = MaterialTheme.typography.titleMedium)
+                    presentation.continueDetail?.let {
+                        Text(
+                            it,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
                 }
             }
         }
-        Text("Ready", style = MaterialTheme.typography.titleLarge)
-        ControllerButton(
-            id = "play",
-            focusedId = focusedId,
-            onFocused = onFocused,
-            onClick = onPlay,
-            enabled = !busy && selected != null,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(if (busy) "Preparing…" else "Play ${selected?.profile?.name.orEmpty()}")
-        }
-        Text("Your games", style = MaterialTheme.typography.titleLarge)
+    }
+}
+
+@Composable
+private fun SelectionPanels(
+    snapshot: LauncherSnapshot,
+    selectedProfileId: String?,
+    selectedGameId: String?,
+    busy: Boolean,
+    focusedId: String?,
+    onFocused: (String) -> Unit,
+    onSelectGame: (String) -> Unit,
+    onSelectProfile: (String) -> Unit,
+    onRoute: (LauncherRoute) -> Unit,
+) {
+    EmberPanel(modifier = Modifier.fillMaxWidth()) {
+        SectionHeading("Your games", "${snapshot.games.size} installed")
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             snapshot.games.forEach { game ->
-                val selectedGame = selected?.profile?.gameContentId == game.contentId
+                val selected = selectedGameId == game.contentId
                 ControllerButton(
                     id = "game-${game.contentId}",
                     focusedId = focusedId,
                     onFocused = onFocused,
                     onClick = { onSelectGame(game.contentId) },
                     enabled = !busy,
+                    selected = selected,
+                    modifier = Modifier.widthIn(min = 150.dp, max = 260.dp),
+                    role = ControllerButtonRole.QUIET,
                 ) {
-                    Text(if (selectedGame) "✓ ${game.displayName}" else game.displayName)
+                    Column {
+                        if (selected) {
+                            Text("SELECTED", style = MaterialTheme.typography.labelMedium)
+                        }
+                        Text(
+                            game.displayName,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
-        Text("Mod profiles", style = MaterialTheme.typography.titleLarge)
+    }
+    Spacer(Modifier.height(CinderhellSpacing.Section))
+    EmberPanel(modifier = Modifier.fillMaxWidth()) {
+        SectionHeading("Mod profiles", "${snapshot.profiles.size} ready")
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             snapshot.profiles.forEach { profile ->
+                val selected = profile.profile.profileId == selectedProfileId
                 ControllerButton(
                     id = "profile-${profile.profile.profileId}",
                     focusedId = focusedId,
                     onFocused = onFocused,
                     onClick = { onSelectProfile(profile.profile.profileId) },
                     enabled = !busy,
+                    selected = selected,
+                    modifier = Modifier.widthIn(min = 160.dp, max = 280.dp),
+                    role = ControllerButtonRole.QUIET,
                 ) {
-                    Text(
-                        if (profile.profile.selected) {
-                            "✓ ${profile.profile.name}"
-                        } else {
-                            profile.profile.name
-                        },
-                    )
+                    Column {
+                        if (selected) {
+                            Text("SELECTED", style = MaterialTheme.typography.labelMedium)
+                        }
+                        Text(
+                            profile.profile.name,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            when (profile.orderedEntries.size) {
+                                0 -> "Base game"
+                                1 -> "1 addition"
+                                else -> "${profile.orderedEntries.size} additions"
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
                 }
             }
             ControllerButton(
@@ -338,42 +480,66 @@ private fun HomeScreen(
                 onFocused = onFocused,
                 onClick = { onRoute(LauncherRoute.ProfileEditor(null)) },
                 enabled = !busy,
+                role = ControllerButtonRole.SECONDARY,
             ) {
                 Text("Add mod set")
             }
-            selected?.let { profile ->
+            selectedProfileId?.let { profileId ->
                 ControllerButton(
                     id = "edit-profile",
                     focusedId = focusedId,
                     onFocused = onFocused,
-                    onClick = {
-                        onRoute(LauncherRoute.ProfileEditor(profile.profile.profileId))
-                    },
+                    onClick = { onRoute(LauncherRoute.ProfileEditor(profileId)) },
                     enabled = !busy,
+                    role = ControllerButtonRole.QUIET,
                 ) {
-                    Text("Edit")
+                    Text("Edit selected")
                 }
             }
         }
-        HorizontalDivider()
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    }
+}
+
+@Composable
+private fun UtilityActions(
+    selectedProfileId: String?,
+    busy: Boolean,
+    focusedId: String?,
+    onFocused: (String) -> Unit,
+    onImport: () -> Unit,
+    onRoute: (LauncherRoute) -> Unit,
+) {
+    EmberPanel(modifier = Modifier.fillMaxWidth()) {
+        SectionHeading("Manage", "Secondary actions")
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             ControllerButton(
                 id = "import",
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = onImport,
                 enabled = !busy,
-            ) {
-                Text("Import game or mod")
-            }
+                role = ControllerButtonRole.SECONDARY,
+            ) { Text("Import game or mod") }
             ControllerButton(
                 id = "library",
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = { onRoute(LauncherRoute.Library) },
                 enabled = !busy,
-            ) {
-                Text("Library")
+                role = ControllerButtonRole.QUIET,
+            ) { Text("Library") }
+            selectedProfileId?.let { profileId ->
+                ControllerButton(
+                    id = "advanced",
+                    focusedId = focusedId,
+                    onFocused = onFocused,
+                    onClick = { onRoute(LauncherRoute.Advanced(profileId)) },
+                    enabled = !busy,
+                    role = ControllerButtonRole.QUIET,
+                ) { Text("Advanced") }
             }
             ControllerButton(
                 id = "notices",
@@ -381,24 +547,9 @@ private fun HomeScreen(
                 onFocused = onFocused,
                 onClick = { onRoute(LauncherRoute.Notices) },
                 enabled = !busy,
-            ) {
-                Text("Notices")
-            }
-            selected?.let {
-                ControllerButton(
-                    id = "advanced",
-                    focusedId = focusedId,
-                    onFocused = onFocused,
-                    onClick = {
-                        onRoute(LauncherRoute.Advanced(it.profile.profileId))
-                    },
-                    enabled = !busy,
-                ) {
-                    Text("Advanced")
-                }
-            }
+                role = ControllerButtonRole.QUIET,
+            ) { Text("Notices") }
         }
-        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -415,14 +566,23 @@ private fun NoticesScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Open-source notices", style = MaterialTheme.typography.headlineMedium)
-        Text(noticesText, style = MaterialTheme.typography.bodySmall)
-        ControllerButton(
-            id = "notices-back",
-            focusedId = focusedId,
-            onFocused = onFocused,
-            onClick = onBack,
-        ) { Text("Back") }
+        RouteHeading(
+            eyebrow = "About Cinderhell",
+            title = "Open-source notices",
+            detail = "Licences and attribution for the software and game data in this build.",
+        )
+        EmberPanel(modifier = Modifier.fillMaxWidth()) {
+            Text(noticesText, style = MaterialTheme.typography.bodySmall)
+        }
+        FooterActions {
+            ControllerButton(
+                id = "notices-back",
+                focusedId = focusedId,
+                onFocused = onFocused,
+                onClick = onBack,
+                role = ControllerButtonRole.PRIMARY,
+            ) { Text("Back") }
+        }
     }
 }
 
@@ -469,9 +629,14 @@ private fun ProfileEditorScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            if (existing == null) "Create mod profile" else "Edit ${existing.profile.name}",
-            style = MaterialTheme.typography.headlineMedium,
+        RouteHeading(
+            eyebrow = "Mod profile",
+            title = if (existing == null) {
+                "Create a loadout"
+            } else {
+                "Edit ${existing.profile.name}"
+            },
+            detail = "Choose one game, a curated preset, and an exact mod load order.",
         )
         OutlinedTextField(
             value = name,
@@ -480,7 +645,7 @@ private fun ProfileEditorScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        Text("Game", style = MaterialTheme.typography.titleMedium)
+        SectionHeading("Game", "Required")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             snapshot.games.forEach { game ->
                 ControllerButton(
@@ -489,13 +654,15 @@ private fun ProfileEditorScreen(
                     onFocused = onFocused,
                     onClick = { gameId = game.contentId },
                     enabled = !busy,
+                    selected = gameId == game.contentId,
+                    role = ControllerButtonRole.QUIET,
                 ) {
-                    Text(if (gameId == game.contentId) "✓ ${game.displayName}" else game.displayName)
+                    Text(game.displayName)
                 }
             }
         }
         if (existing == null) {
-            Text("Preset", style = MaterialTheme.typography.titleMedium)
+            SectionHeading("Preset", "Curated defaults")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ProfilePresets.all.forEach { preset ->
                     ControllerButton(
@@ -504,8 +671,10 @@ private fun ProfileEditorScreen(
                         onFocused = onFocused,
                         onClick = { presetId = preset.id },
                         enabled = !busy,
+                        selected = presetId == preset.id,
+                        role = ControllerButtonRole.QUIET,
                     ) {
-                        Text(if (presetId == preset.id) "✓ ${preset.displayName}" else preset.displayName)
+                        Text(preset.displayName)
                     }
                 }
             }
@@ -514,8 +683,13 @@ private fun ProfileEditorScreen(
                 "Preset: ${ProfilePresets.require(existing.profile.presetId, existing.profile.presetVersion).displayName}. Change it from Advanced.",
             )
         }
-        Text("Load order", style = MaterialTheme.typography.titleMedium)
-        if (entries.isEmpty()) Text("No mods or patches. The game loads by itself.")
+        SectionHeading("Load order", "${entries.size} additions")
+        if (entries.isEmpty()) {
+            EmptyState(
+                title = "Base game only",
+                detail = "No mods or patches are attached. The selected game loads by itself.",
+            )
+        }
         entries.forEachIndexed { index, draft ->
             val item = contentById[draft.contentId]
             Row(
@@ -550,6 +724,7 @@ private fun ProfileEditorScreen(
                         entries = entries.filterNot { it.contentId == draft.contentId }
                     },
                     enabled = !busy,
+                    role = ControllerButtonRole.DANGER,
                 ) { Text("Remove") }
             }
         }
@@ -557,7 +732,7 @@ private fun ProfileEditorScreen(
                 entries.none { it.contentId == candidate.contentId }
             }
         ) {
-            Text("Available additions", style = MaterialTheme.typography.titleMedium)
+            SectionHeading("Available additions", "Add to load order")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 snapshot.additions
                     .filter { candidate -> entries.none { it.contentId == candidate.contentId } }
@@ -574,7 +749,7 @@ private fun ProfileEditorScreen(
                     }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        FooterActions {
             ControllerButton(
                 id = "save-profile",
                 focusedId = focusedId,
@@ -591,6 +766,7 @@ private fun ProfileEditorScreen(
                     )
                 },
                 enabled = !busy && name.isNotBlank() && gameId.isNotBlank(),
+                role = ControllerButtonRole.PRIMARY,
             ) { Text("Save profile") }
             ControllerButton(
                 id = "profile-back",
@@ -598,6 +774,7 @@ private fun ProfileEditorScreen(
                 onFocused = onFocused,
                 onClick = onBack,
                 enabled = !busy,
+                role = ControllerButtonRole.QUIET,
             ) { Text("Back") }
         }
         Spacer(Modifier.height(8.dp))
@@ -618,7 +795,28 @@ private fun AdvancedScreen(
         it.profile.profileId == route.profileId
     }
     if (profile == null) {
-        Text("This profile is no longer available.")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            RouteHeading(
+                eyebrow = "Advanced",
+                title = "Profile unavailable",
+            )
+            EmptyState(
+                title = "This profile was removed",
+                detail = "Return home and select another profile before changing presets.",
+            )
+            ControllerButton(
+                id = "advanced-back",
+                focusedId = focusedId,
+                onFocused = onFocused,
+                onClick = onBack,
+                role = ControllerButtonRole.PRIMARY,
+            ) { Text("Back") }
+        }
         return
     }
     val current = ProfilePresets.require(
@@ -631,46 +829,55 @@ private fun AdvancedScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("Advanced — ${profile.profile.name}", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "Current preset: ${current.displayName}",
-            style = MaterialTheme.typography.titleMedium,
+        RouteHeading(
+            eyebrow = "Advanced",
+            title = profile.profile.name,
+            detail = "Reapply Cinderhell's curated presentation and controller defaults.",
         )
-        Text(
-            "Reapplying a preset changes only Cinderhell's curated video, audio, and controller values. Your other in-game settings remain untouched.",
-        )
-        ProfilePresets.all.forEach { preset ->
-            ControllerButton(
-                id = "apply-${preset.id.wireValue}",
-                focusedId = focusedId,
-                onFocused = onFocused,
-                onClick = { onRequestPreset(profile.profile.profileId, preset.id) },
-                enabled = !busy,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column {
-                    Text(
-                        if (current.id == preset.id) {
-                            "${preset.displayName} (current)"
-                        } else {
-                            preset.displayName
-                        },
-                    )
-                    Text(preset.description, style = MaterialTheme.typography.labelMedium)
+        EmberPanel(modifier = Modifier.fillMaxWidth(), highlighted = true) {
+            SectionHeading("Presentation preset", "${current.displayName} selected")
+            Text(
+                "Only curated video, audio, and controller values change. Other in-game settings remain untouched.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ProfilePresets.all.forEach { preset ->
+                ControllerButton(
+                    id = "apply-${preset.id.wireValue}",
+                    focusedId = focusedId,
+                    onFocused = onFocused,
+                    onClick = { onRequestPreset(profile.profile.profileId, preset.id) },
+                    enabled = !busy,
+                    selected = current.id == preset.id,
+                    modifier = Modifier.fillMaxWidth(),
+                    role = ControllerButtonRole.QUIET,
+                ) {
+                    Column {
+                        Text(preset.displayName, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            preset.description,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
                 }
             }
         }
-        Text("More supported settings", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Rendering, audio, HUD, controller curves, deadzones, rumble, gyro, and input bindings remain available from Options inside the game.",
-        )
-        ControllerButton(
-            id = "advanced-back",
-            focusedId = focusedId,
-            onFocused = onFocused,
-            onClick = onBack,
-            enabled = !busy,
-        ) { Text("Back") }
+        EmberPanel(modifier = Modifier.fillMaxWidth()) {
+            SectionHeading("Engine options", "Inside the game")
+            Text(
+                "Rendering, audio, HUD, controller curves, deadzones, rumble, gyro, and input bindings remain available from Options inside the game.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        FooterActions {
+            ControllerButton(
+                id = "advanced-back",
+                focusedId = focusedId,
+                onFocused = onFocused,
+                onClick = onBack,
+                enabled = !busy,
+                role = ControllerButtonRole.PRIMARY,
+            ) { Text("Back") }
+        }
     }
 }
 
@@ -688,49 +895,83 @@ private fun LibraryScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("Library", style = MaterialTheme.typography.headlineMedium)
-        snapshot.content.forEach { item ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(item.displayName, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "${item.contentType.name.lowercase().replace('_', ' ')} · ${item.byteSize / 1024} KiB",
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                }
-                if (item.bundled) {
-                    Text("Included")
-                } else {
-                    ControllerButton(
-                        id = "remove-${item.contentId}",
-                        focusedId = focusedId,
-                        onFocused = onFocused,
-                        onClick = { onRequestRemoval(item.contentId) },
-                        enabled = !busy,
-                    ) { Text("Remove") }
+        RouteHeading(
+            eyebrow = "Content",
+            title = "Library",
+            detail = "App-owned games, mods, archives, and patches available to profiles.",
+        )
+        if (snapshot.content.isEmpty()) {
+            EmptyState(
+                title = "Nothing installed",
+                detail = "Import a supported Doom game or mod to begin.",
+            )
+        } else {
+            EmberPanel(modifier = Modifier.fillMaxWidth()) {
+                snapshot.content.forEachIndexed { index, item ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                item.displayName,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                                verticalArrangement = Arrangement.spacedBy(7.dp),
+                            ) {
+                                MetadataPill(contentTypeLabel(item.contentType.name))
+                                MetadataPill(formatContentSize(item.byteSize))
+                                if (item.bundled) {
+                                    MetadataPill("Included", accent = true)
+                                }
+                            }
+                        }
+                        if (!item.bundled) {
+                            ControllerButton(
+                                id = "remove-${item.contentId}",
+                                focusedId = focusedId,
+                                onFocused = onFocused,
+                                onClick = { onRequestRemoval(item.contentId) },
+                                enabled = !busy,
+                                role = ControllerButtonRole.DANGER,
+                            ) { Text("Remove") }
+                        }
+                    }
+                    if (index != snapshot.content.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 5.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.55f),
+                        )
+                    }
                 }
             }
-            HorizontalDivider()
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        FooterActions {
             ControllerButton(
                 id = "library-import",
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = onImport,
                 enabled = !busy,
-            ) { Text("Import") }
+                role = ControllerButtonRole.PRIMARY,
+            ) { Text("Import game or mod") }
             ControllerButton(
                 id = "library-back",
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = onBack,
                 enabled = !busy,
+                role = ControllerButtonRole.QUIET,
             ) { Text("Back") }
         }
     }
@@ -741,6 +982,7 @@ private fun ConfirmationDialog(
     title: String,
     body: String,
     confirmId: String,
+    destructive: Boolean = false,
     focusedId: String?,
     onFocused: (String) -> Unit,
     onConfirm: () -> Unit,
@@ -756,6 +998,11 @@ private fun ConfirmationDialog(
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = onConfirm,
+                role = if (destructive) {
+                    ControllerButtonRole.DANGER
+                } else {
+                    ControllerButtonRole.PRIMARY
+                },
             ) { Text("Confirm") }
         },
         dismissButton = {
@@ -764,6 +1011,7 @@ private fun ConfirmationDialog(
                 focusedId = focusedId,
                 onFocused = onFocused,
                 onClick = onDismiss,
+                role = ControllerButtonRole.QUIET,
             ) { Text("Cancel") }
         },
     )

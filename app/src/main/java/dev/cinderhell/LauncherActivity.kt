@@ -1,5 +1,6 @@
 package dev.cinderhell
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -25,6 +26,7 @@ import dev.cinderhell.profile.PresetReapplyPreview
 import dev.cinderhell.session.BundledSessionCoordinator
 import dev.cinderhell.session.GameSessionDescriptor
 import dev.cinderhell.session.SessionOutcome
+import dev.cinderhell.ui.LauncherNotice
 import dev.cinderhell.ui.LauncherRoute
 import dev.cinderhell.ui.LauncherScreen
 import dev.cinderhell.ui.ProfileSaveRequest
@@ -46,7 +48,7 @@ class LauncherActivity : ComponentActivity() {
     private var snapshot by androidx.compose.runtime.mutableStateOf<LauncherSnapshot?>(null)
     private var route by androidx.compose.runtime.mutableStateOf<LauncherRoute>(LauncherRoute.Home)
     private var busy by androidx.compose.runtime.mutableStateOf(true)
-    private var statusMessage by androidx.compose.runtime.mutableStateOf<String?>(null)
+    private var notice by androidx.compose.runtime.mutableStateOf<LauncherNotice?>(null)
     private var focusedId by androidx.compose.runtime.mutableStateOf<String?>("play")
     private var controller by androidx.compose.runtime.mutableStateOf(ControllerDeviceState(false))
     private var removalPlan by androidx.compose.runtime.mutableStateOf<ContentRemovalPlan?>(null)
@@ -66,10 +68,13 @@ class LauncherActivity : ComponentActivity() {
                 val wasConnected = controller.connected
                 controller = state
                 if (wasConnected && !state.connected) {
-                    statusMessage =
-                        "Controller disconnected. Reconnect it or use Android Back to stay safe."
+                    notice = LauncherNotice.warning(
+                        "Controller disconnected. Reconnect it or use Android Back to stay safe.",
+                    )
                 } else if (!wasConnected && state.connected && snapshot != null) {
-                    statusMessage = "${state.name ?: "Controller"} connected."
+                    notice = LauncherNotice.success(
+                        "${state.name ?: "Controller"} connected.",
+                    )
                 }
             }
         }
@@ -79,7 +84,7 @@ class LauncherActivity : ComponentActivity() {
                     snapshot = snapshot,
                     route = route,
                     busy = busy,
-                    statusMessage = statusMessage,
+                    statusNotice = notice,
                     controller = controller,
                     focusedId = focusedId,
                     removalPlan = removalPlan,
@@ -122,17 +127,22 @@ class LauncherActivity : ComponentActivity() {
                 sessions.recoverAndConsumeResults()
             }
             results.lastOrNull()?.let { result ->
-                statusMessage = when (result.outcome) {
-                    SessionOutcome.CLEAN_EXIT -> "Game closed safely."
+                notice = when (result.outcome) {
+                    SessionOutcome.CLEAN_EXIT ->
+                        LauncherNotice.success("Game closed safely.")
+
                     SessionOutcome.STARTUP_FAILURE,
                     SessionOutcome.INTERRUPTED,
-                    -> result.userMessage ?: "The game stopped unexpectedly."
+                    -> LauncherNotice.error(
+                        result.userMessage ?: "The game stopped unexpectedly.",
+                    )
                 }
             }
             refresh(showBusy = snapshot == null)
         }
     }
 
+    @SuppressLint("RestrictedApi")
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         val keyCode = stickNavigation.translate(event)
             ?: return super.dispatchGenericMotionEvent(event)
@@ -141,6 +151,7 @@ class LauncherActivity : ComponentActivity() {
         return super.dispatchKeyEvent(down) || super.dispatchKeyEvent(up)
     }
 
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val controllerSource =
             event.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
@@ -180,8 +191,9 @@ class LauncherActivity : ComponentActivity() {
             try {
                 snapshot = withContext(Dispatchers.IO) { launcher.load() }
             } catch (error: Exception) {
-                statusMessage =
-                    error.message ?: "The game library could not be prepared."
+                notice = LauncherNotice.error(
+                    error.message ?: "The game library could not be prepared.",
+                )
             } finally {
                 if (showBusy) busy = false
             }
@@ -192,7 +204,7 @@ class LauncherActivity : ComponentActivity() {
         if (busy) return
         lifecycleScope.launch {
             busy = true
-            statusMessage = null
+            notice = null
             var descriptor: GameSessionDescriptor? = null
             try {
                 descriptor = withContext(Dispatchers.IO) {
@@ -218,7 +230,9 @@ class LauncherActivity : ComponentActivity() {
                         )
                     }
                 }
-                statusMessage = error.message ?: "The game could not be opened."
+                notice = LauncherNotice.error(
+                    error.message ?: "The game could not be opened.",
+                )
             } finally {
                 busy = false
             }
@@ -256,7 +270,9 @@ class LauncherActivity : ComponentActivity() {
                 removalPlan = it
                 focusedId = "confirm-removal"
             }.onFailure {
-                statusMessage = it.message ?: "That item could not be removed."
+                notice = LauncherNotice.error(
+                    it.message ?: "That item could not be removed.",
+                )
             }
         }
     }
@@ -280,7 +296,9 @@ class LauncherActivity : ComponentActivity() {
                 presetPreview = it
                 focusedId = "confirm-preset"
             }.onFailure {
-                statusMessage = it.message ?: "The preset could not be previewed."
+                notice = LauncherNotice.error(
+                    it.message ?: "The preset could not be previewed.",
+                )
             }
         }
     }
@@ -298,7 +316,7 @@ class LauncherActivity : ComponentActivity() {
         if (busy) return
         lifecycleScope.launch {
             busy = true
-            statusMessage = "Importing selected document…"
+            notice = LauncherNotice.info("Importing selected document…")
             try {
                 val result = importer.import(uri)
                 val item = when (result) {
@@ -308,16 +326,20 @@ class LauncherActivity : ComponentActivity() {
                 if (item.contentType == ContentType.GAME_WAD) {
                     withContext(Dispatchers.IO) { launcher.selectGame(item.contentId) }
                 }
-                statusMessage = when (result) {
+                notice = when (result) {
                     is ContentImportResult.Imported ->
-                        "${result.item.displayName} was added."
+                        LauncherNotice.success("${result.item.displayName} was added.")
 
                     is ContentImportResult.Duplicate ->
-                        "${result.existing.displayName} was already imported."
+                        LauncherNotice.info(
+                            "${result.existing.displayName} was already imported.",
+                        )
                 }
                 snapshot = withContext(Dispatchers.IO) { launcher.load() }
             } catch (error: Exception) {
-                statusMessage = error.message ?: "The selected document could not be imported."
+                notice = LauncherNotice.error(
+                    error.message ?: "The selected document could not be imported.",
+                )
             } finally {
                 busy = false
             }
@@ -328,12 +350,16 @@ class LauncherActivity : ComponentActivity() {
         if (busy) return
         lifecycleScope.launch {
             busy = true
-            statusMessage = null
+            notice = null
             try {
-                statusMessage = withContext(Dispatchers.IO) { action() }
+                notice = LauncherNotice.success(
+                    withContext(Dispatchers.IO) { action() },
+                )
                 snapshot = withContext(Dispatchers.IO) { launcher.load() }
             } catch (error: Exception) {
-                statusMessage = error.message ?: "That change could not be saved."
+                notice = LauncherNotice.error(
+                    error.message ?: "That change could not be saved.",
+                )
             } finally {
                 busy = false
             }

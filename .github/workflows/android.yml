@@ -49,8 +49,8 @@ jobs:
           ./scripts/build-test-corpus.py
           (cd test-corpus/generated && sha256sum --check SHA256SUMS)
 
-      - name: JVM tests and native Android builds
-        run: ./gradlew testDebugUnitTest assembleDebug assembleRelease assemblePreview --stacktrace
+      - name: JVM tests, lint, and native Android builds
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease assemblePreview assembleDebugAndroidTest --stacktrace
 
       - name: Inspect APK contents
         run: |
@@ -97,7 +97,7 @@ jobs:
           ./scripts/verify-bootstrap.sh
 
       - name: Physical arm64 instrumentation
-        run: ./gradlew connectedDebugAndroidTest --stacktrace
+        run: ./scripts/run-device-tests.sh
 
       - name: Capture device matrix evidence
         if: always()

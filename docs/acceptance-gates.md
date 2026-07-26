@@ -14,9 +14,16 @@ Status as of 2026-07-26:
    inspection, clean install, schema/preset upgrade preservation, notices,
    corresponding source, and the target AYN built-in-controller matrix pass.
 
-The signed development-key preview is an internal test artifact only. Do not
-externally distribute it until an owner-controlled signing identity is
-selected.
+An owner-controlled preview signing identity is provisioned and the GitHub
+draft assets pass automated package, version, signature, checksum, and
+corresponding-source inspection. The draft remains unpublished until the exact
+signed GitHub APK completes the maintainer's physical smoke gate.
+
+The polished launcher passed all 13 instrumentation tests on the AYN Thor on
+2026-07-26 after a direct wide-landscape contrast and focus inspection. The
+same change also passes `scripts/verify-no-device.sh`; that complementary gate
+explicitly does not invoke ADB. The exact signed GitHub APK must still complete
+its final physical smoke before the draft release is published.
 
 Validated Bluetooth-gamepad support is intentionally deferred and is not an
 MVP acceptance dependency. External pads discovered through SDL may work on a
